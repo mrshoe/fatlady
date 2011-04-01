@@ -1,0 +1,130 @@
+<html>
+<head>
+	<title>Is The Game Over Yet?</title>
+	<style>
+	* {
+		margin: 0;
+		padding: 0;
+	}
+	body {
+		background-color: #ddd;
+	}
+	div#content {
+		background-color: white;
+		border-left: 1px solid #555;
+		border-right: 1px solid #555;
+		margin: 0 auto;
+		width: 900px;
+		padding: 30px;
+	}
+	table {
+		border: 1px solid #555;
+		margin: 20px;
+		padding: 20px;
+		width: 370px;
+		float: left;
+	}
+	td {
+		padding: 8px;
+	}
+	td.teamname {
+		width: 200px;
+	}
+	span.star {
+		font-size: 12px;
+		padding-right: 10px;
+	}
+	span.star.fav {
+		color: #33d;
+	}
+	</style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script>
+		var favs = [];
+		function read_cookie() {
+			var start = document.cookie.indexOf('favs=');
+			if (start < 0) {
+				favs = [];
+				return;
+			}
+			var val = document.cookie.slice(start + 5); // skip the name and =
+			var end = val.indexOf(';');
+			if (end < 0)
+				end = val.length;
+			val = val.slice(0, end);
+			if (val.length <= 0) {
+				favs = [];
+				return;
+			}
+			favs = val.split(',');
+		}
+		function load_favorites() {
+			read_cookie();
+			var favcontainer = $('#favcontainer');
+			favcontainer.empty();
+			$('span.star').removeClass('fav');
+			var favclasses = [];
+			for (var i=0; i < favs.length; i++) {
+				favclasses.push('table.' + favs[i]);
+				$('span.'+favs[i]).addClass('fav');
+			}
+			var favgames = $(favclasses.join());
+			if (favgames.size() > 0) {
+				$('#favinstructions').css('display', 'none');
+				favgames.each(function (idx, elem) { favcontainer.append($(elem).clone()); });
+			}
+			else {
+				$('#favinstructions').css('display', 'block');
+			}
+		}
+		$(document).ready(load_favorites);
+		function toggle_fav(fav) {
+			var was_on = false;
+			var newfavs = [];
+			for (var i=0; i < favs.length; i++) {
+				if (favs[i] == fav)
+					was_on = true;
+				else
+					newfavs.push(favs[i]);
+			}
+			if (!was_on) {
+				newfavs.push(fav);
+			}
+			document.cookie = 'favs='+newfavs.toString()+'; expires=Fri, 31 Dec 2050 12:00:00 UTC; path=/';
+			load_favorites();
+		}
+	</script>
+</head>
+<body>
+<div id="content">
+	<h1>Is The Game Over Yet?</h1>
+	<h3>All times Eastern</h3>
+	<div>
+	<h2>Favorites</h2>
+	<p id="favinstructions">Click the star next to a team name to add them to your favorites.</p>
+	<div id="favcontainer">
+	</div>
+	<br style="clear:both" />
+	</div>
+%for name, games in sports:
+	<div>
+	<h2>{{ name }}</h2>
+	%for game in games:
+	%homeclass = game.sport + game.home
+	%awayclass = game.sport + game.away
+	<table class="{{ homeclass }} {{ awayclass }}">
+		<tr>
+			<td class="teamname"><span class="star {{ homeclass }}" onclick="toggle_fav('{{ homeclass }}')">&#9733;</span>{{ game.home }}</td>
+			<td rowspan="2">{{ game.status }}</td>
+		</tr>
+		<tr>
+			<td class="teamname"><span class="star {{ awayclass }}" onclick="toggle_fav('{{ awayclass }}')">&#9733;</span>{{ game.away }}</td>
+		</tr>
+	</table>
+	%end
+	<br style="clear:both" />
+	</div>
+%end
+</div>
+</body>
+</html>
